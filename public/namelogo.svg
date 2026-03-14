@@ -1,0 +1,20 @@
+<svg viewBox="160 40 460 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&amp;display=swap');
+    </style>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7CFF6B"/>
+      <stop offset="100%" stop-color="#2AAE4A"/>
+    </linearGradient>
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#7CFF6B" flood-opacity="0.5"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#2AAE4A" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- text -->
+  <text x="170" y="130" font-family="'Orbitron', Arial, sans-serif" font-size="80" font-weight="700" letter-spacing="1">
+    <tspan fill="#E6E6E6">Dork</tspan><tspan fill="url(#green)" filter="url(#neon-glow)">Hunt</tspan>
+  </text>
+</svg>
