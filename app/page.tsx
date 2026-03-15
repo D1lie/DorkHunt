@@ -71,7 +71,7 @@ export default function HomePage() {
           <div className="container py-12">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               <div className="text-center">
-                <div className="mb-2 text-4xl font-bold text-primary">130+</div>
+                <div className="mb-2 text-4xl font-bold text-primary">930+</div>
                 <div className="text-sm text-muted-foreground">Curated Dorks</div>
               </div>
               <div className="text-center">
