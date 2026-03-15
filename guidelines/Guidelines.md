@@ -1,61 +1,119 @@
-**Add your own guidelines here**
-<!--
+# DorkHunt Guidelines
 
-System Guidelines
+Hey, if you're reading this — welcome to the DorkHunt codebase. This file is here to help you (or future me) understand how things work and what to keep in mind when making changes.
 
-Use this file to provide the AI with rules and guidelines you want it to follow.
-This template outlines a few examples of things you can add. You can add your own sections and format it to suit your needs
+---
 
-TIP: More context isn't always better. It can confuse the LLM. Try and add the most important rules you need
+## What is DorkHunt?
 
-# General guidelines
+DorkHunt is a recon tool I built for bug hunters and security researchers. The idea is simple — instead of manually writing Google dorks every time, you get a curated list, an AI generator, and the ability to save and export your dorks for later use.
 
-Any general rules you want the AI to follow.
-For example:
+- Live site: https://dorkhunt.netlify.app
+- GitHub: https://github.com/D1lie/DorkHunt
+- Built with: Next.js 15, TypeScript, Tailwind CSS, Gemini API
+- Still in progress — v1.0 is out but there's more coming
 
-* Only use absolute positioning when necessary. Opt for responsive and well structured layouts that use flexbox and grid by default
-* Refactor code as you go to keep code clean
-* Keep file sizes small and put helper functions and components in their own files.
+---
 
---------------
+## General Rules
 
-# Design system guidelines
-Rules for how the AI should make generations look like your company's design system
+A few things I want to keep consistent across the project:
 
-Additionally, if you select a design system to use in the prompt box, you can reference
-your design system's components, tokens, variables and components.
-For example:
+- Don't use absolute positioning unless there's a real reason for it. Flexbox and grid handle most things cleanly.
+- Keep files small and focused. If a helper function or component is getting big, split it out.
+- Refactor as you go — don't let things get messy.
+- If something isn't broken, don't touch it. Especially the core dork logic and API routes.
+- The dark hacker aesthetic is intentional. Green on black, monospace for dork text. Keep it that way.
 
-* Use a base font-size of 14px
-* Date formats should always be in the format “Jun 10”
-* The bottom toolbar should only ever have a maximum of 4 items
-* Never use the floating action button with the bottom toolbar
-* Chips should always come in sets of 3 or more
-* Don't use a dropdown if there are 2 or fewer options
+---
 
-You can also create sub sections and add more specific details
-For example:
+## Responsive Design
 
+The app needs to work well on phones too, not just desktops. Here's how I approach it:
 
-## Button
-The Button component is a fundamental interactive element in our design system, designed to trigger actions or navigate
-users through the application. It provides visual feedback and clear affordances to enhance user experience.
+- Mobile-first. Start small, then scale up with `sm:`, `md:`, `lg:` breakpoints.
+- The navbar collapses into a hamburger menu on mobile. Desktop gets the full nav.
+- Buttons stack vertically on small screens and go inline on larger ones.
+- Dork cards stay in a single row layout — badge, dork text, action buttons — but the text wraps naturally on mobile.
+- Touch targets should be at least 44px so things are actually tappable on a phone.
+- Font sizes drop a bit on mobile (`text-xs` or `text-sm`) and go back to normal on desktop.
 
-### Usage
-Buttons should be used for important actions that users need to take, such as form submissions, confirming choices,
-or initiating processes. They communicate interactivity and should have clear, action-oriented labels.
+---
 
-### Variants
-* Primary Button
-  * Purpose : Used for the main action in a section or page
-  * Visual Style : Bold, filled with the primary brand color
-  * Usage : One primary button per section to guide users toward the most important action
-* Secondary Button
-  * Purpose : Used for alternative or supporting actions
-  * Visual Style : Outlined with the primary color, transparent background
-  * Usage : Can appear alongside a primary button for less important actions
-* Tertiary Button
-  * Purpose : Used for the least important actions
-  * Visual Style : Text-only with no border, using primary color
-  * Usage : For actions that should be available but not emphasized
--->
+## Design Decisions
+
+The look and feel is intentional — dark, terminal-like, green accents. Here's what drives it:
+
+- Primary green: `hsl(142 76% 36%)`
+- Background: near-black `hsl(120 10% 5%)`
+- Cards sit on `hsl(120 10% 8%)` — just slightly lighter than the background
+- Borders are subtle: `hsl(120 10% 20%)`
+- Two fonts: Inter for UI text, JetBrains Mono for dork strings
+- The `glow` class adds a green box-shadow — use it on primary CTAs and active states
+
+For components, I'm using shadcn/ui. Don't reinvent the wheel — check `components/ui/` first before building something custom.
+
+---
+
+## How the API Works
+
+There are three API routes:
+
+- `/api/default-dorks` — reads `data/Dorks.txt` and returns the list
+- `/api/bug-bounty-dorks` — reads `data/bugbountydorks.txt`
+- `/api/generate-dorks` — calls the Gemini API to generate custom dorks
+
+For the Gemini integration, you need a `GEMINI_API_KEY` in your `.env.local`. Without it, the AI generation won't work but everything else still does — the curated dorks load fine.
+
+The model defaults to `gemini-2.0-flash` but you can override it with `GEMINI_MODEL` in your env file.
+
+---
+
+## What's Still Being Worked On
+
+A few things aren't perfect yet:
+
+- **AI generation** — it works, but it needs a solid API key. Free-tier Gemini keys hit rate limits pretty fast. I'm looking into a better way to handle this for public users.
+- **Mobile layout** — mostly done but still tweaking a few pages.
+- **More dorks** — planning to expand the curated lists with more categories.
+
+---
+
+## Project Structure (quick reference)
+
+```
+app/
+  page.tsx                  → Home / landing page
+  dork-search/              → Main search + AI generation page
+  bug-bounty-dorks/         → Curated bug bounty dorks
+  docs/                     → Documentation
+  api/
+    default-dorks/          → Serves the default dorks list
+    bug-bounty-dorks/       → Serves the bug bounty dorks list
+    generate-dorks/         → Gemini AI generation endpoint
+
+components/
+  navbar.tsx                → Sticky top nav, mobile hamburger included
+  footer.tsx                → Footer with nav links and safety notice
+  dork-card-row.tsx         → Single dork row used on bug bounty page
+  dork-results-list.tsx     → Dork list used on dork search page
+  dork-row-actions.tsx      → The search / copy / save buttons on each row
+  dork-search-sidebar.tsx   → Target domain input + category filters
+
+lib/
+  dorks.server.ts           → Reads dork files from disk (server-side only)
+  gemini.ts                 → Gemini API client
+  storage.ts                → Saves/loads dorks from localStorage
+  dork-utils.ts             → Helpers for creating and filtering dork items
+  dork-categorizer.ts       → Figures out what category a dork belongs to
+
+data/
+  Dorks.txt                 → 995+ default dorks
+  bugbountydorks.txt        → 129 bug bounty specific dorks
+```
+
+---
+
+## One Last Thing
+
+This tool is strictly for **authorized security testing and research**. If you're using it, make sure you have permission to test whatever you're targeting. Don't be that person.
