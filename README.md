@@ -6,6 +6,16 @@ Hey, so I built this thing called DorkHunt because I was tired of keeping my dor
 
 ---
 
+## 📸 Screenshots
+
+![Home Page](public/homepage.png)
+
+![Dork Search](public/dorksearch.png)
+
+![Bug Bounty Dorks](public/bugbountydorks.png)
+
+---
+
 ## 🛑 Heads up about AI Generation
 
 The AI dork generation feature needs an NVIDIA API key to work. I'm just one person running this, so I can't foot the bill for everyone's API usage. Here's how to get it working:
