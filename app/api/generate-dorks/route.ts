@@ -97,4 +97,4 @@ export async function POST(request: NextRequest) {
 }
 
 export const dynamic = "force-dynamic"
-export const maxDuration = 300 // 5 minutes max for slow free-tier API
+export const maxDuration = 25 // Netlify Pro max is 26s — stay just under

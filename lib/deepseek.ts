@@ -22,7 +22,7 @@ function makeClient(apiKey: string) {
   return new OpenAI({
     baseURL: "https://integrate.api.nvidia.com/v1",
     apiKey,
-    timeout: 5 * 60 * 1000, // 5 minutes
+    timeout: 20 * 1000, // 20s — must finish well within Netlify's 26s function limit
     maxRetries: 0,
   })
 }
@@ -63,14 +63,14 @@ export async function generateDorks(input: GenerateDorksInput): Promise<string[]
       ? {
           temperature: 1.0,
           top_p: 1.0,
-          max_tokens: 512,
+          max_tokens: 300,       // 10 short dork strings need ~200-300 tokens max
           frequency_penalty: 0.0,
           presence_penalty: 0.0,
         }
       : {
           temperature: 1,
           top_p: 0.95,
-          max_tokens: 8192,
+          max_tokens: 300,       // same — keeps response fast and within timeout
         }
 
     try {
