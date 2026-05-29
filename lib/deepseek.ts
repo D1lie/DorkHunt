@@ -5,9 +5,10 @@ import { classifyDeepSeekError, getSafeKeyPrefix } from "./deepseek-errors"
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || ""
 const FALLBACK_API_KEY = process.env.NVIDIA_API_KEY_FALLBACK || ""
 
-// Primary: MiniMax M2.7 | Fallback: Meta Llama 4 Maverick
-const PRIMARY_MODEL = "minimaxai/minimax-m2.7"
-const FALLBACK_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
+// Primary: Meta Llama 4 Maverick (fast, reliable on NVIDIA NIM)
+// Fallback: MiniMax M2.7
+const PRIMARY_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
+const FALLBACK_MODEL = "minimaxai/minimax-m2.7"
 
 if (typeof window === "undefined") {
   console.log("=== AI Configuration ===")
@@ -22,7 +23,7 @@ function makeClient(apiKey: string) {
   return new OpenAI({
     baseURL: "https://integrate.api.nvidia.com/v1",
     apiKey,
-    timeout: 20 * 1000, // 20s — must finish well within Netlify's 26s function limit
+    timeout: 12 * 1000, // 12s per attempt — leaves room for fallback within 26s Netlify limit
     maxRetries: 0,
   })
 }
@@ -97,15 +98,20 @@ export async function generateDorks(input: GenerateDorksInput): Promise<string[]
         .slice(0, count)
     } catch (error) {
       const msg = error instanceof Error ? error.message.toLowerCase() : ""
-      const isRetryable =
-        msg.includes("401") || msg.includes("403") ||
-        msg.includes("invalid") || msg.includes("unauthorized") ||
-        msg.includes("quota") || msg.includes("429")
+
+      // Always continue to next model on timeout or connection error
+      // Only break (stop trying) on hard auth failures where the key itself is bad
+      const isHardFailure =
+        msg.includes("401") ||
+        msg.includes("403") ||
+        msg.includes("invalid api key") ||
+        msg.includes("unauthorized")
 
       console.warn(`[AI] Model ${model} (key: ${getSafeKeyPrefix(key)}) failed: ${msg}`)
       lastError = error
 
-      if (!isRetryable) break
+      if (isHardFailure) break  // bad key — no point trying fallback with same key
+      // otherwise: timeout, quota, 429, network error → continue to next attempt
     }
   }
 
