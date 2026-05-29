@@ -5,9 +5,9 @@ import { classifyDeepSeekError, getSafeKeyPrefix } from "./deepseek-errors"
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || ""
 const FALLBACK_API_KEY = process.env.NVIDIA_API_KEY_FALLBACK || ""
 
-// Each key has its own model
-const PRIMARY_MODEL = "deepseek-ai/deepseek-v3.1"
-const FALLBACK_MODEL = "mistralai/devstral-2-123b-instruct-2512"
+// Primary: MiniMax M2.7 | Fallback: Meta Llama 4 Maverick
+const PRIMARY_MODEL = "minimaxai/minimax-m2.7"
+const FALLBACK_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
 
 if (typeof window === "undefined") {
   console.log("=== AI Configuration ===")
@@ -57,14 +57,28 @@ export async function generateDorks(input: GenerateDorksInput): Promise<string[]
 
   let lastError: unknown
   for (const [key, model] of attempts) {
+    // Each model has its own recommended parameters
+    const isLlama = model.startsWith("meta/")
+    const modelParams = isLlama
+      ? {
+          temperature: 1.0,
+          top_p: 1.0,
+          max_tokens: 512,
+          frequency_penalty: 0.0,
+          presence_penalty: 0.0,
+        }
+      : {
+          temperature: 1,
+          top_p: 0.95,
+          max_tokens: 8192,
+        }
+
     try {
       const client = makeClient(key)
       const response = await client.chat.completions.create({
         model,
         messages,
-        temperature: 0.2,
-        top_p: 0.7,
-        max_tokens: 300,
+        ...modelParams,
         stream: false,
       })
 
