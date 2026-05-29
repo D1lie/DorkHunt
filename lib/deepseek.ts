@@ -5,10 +5,10 @@ import { classifyDeepSeekError, getSafeKeyPrefix } from "./deepseek-errors"
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || ""
 const FALLBACK_API_KEY = process.env.NVIDIA_API_KEY_FALLBACK || ""
 
-// Primary: Meta Llama 4 Maverick (fast, reliable on NVIDIA NIM)
-// Fallback: MiniMax M2.7
-const PRIMARY_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
-const FALLBACK_MODEL = "minimaxai/minimax-m2.7"
+// Small, fast 8B models — respond in 1-3s on NVIDIA NIM free tier
+// Maverick/MiniMax are too large and consistently timeout at 12s
+const PRIMARY_MODEL = "meta/llama-3.1-8b-instruct"
+const FALLBACK_MODEL = "meta/llama-3.1-8b-instruct"
 
 if (typeof window === "undefined") {
   console.log("=== AI Configuration ===")
@@ -23,7 +23,7 @@ function makeClient(apiKey: string) {
   return new OpenAI({
     baseURL: "https://integrate.api.nvidia.com/v1",
     apiKey,
-    timeout: 12 * 1000, // 12s per attempt — leaves room for fallback within 26s Netlify limit
+    timeout: 20 * 1000, // 20s — llama-3.1-8b responds in ~2s, this is generous headroom
     maxRetries: 0,
   })
 }
@@ -58,21 +58,11 @@ export async function generateDorks(input: GenerateDorksInput): Promise<string[]
 
   let lastError: unknown
   for (const [key, model] of attempts) {
-    // Each model has its own recommended parameters
-    const isLlama = model.startsWith("meta/")
-    const modelParams = isLlama
-      ? {
-          temperature: 1.0,
-          top_p: 1.0,
-          max_tokens: 300,       // 10 short dork strings need ~200-300 tokens max
-          frequency_penalty: 0.0,
-          presence_penalty: 0.0,
-        }
-      : {
-          temperature: 1,
-          top_p: 0.95,
-          max_tokens: 300,       // same — keeps response fast and within timeout
-        }
+    const modelParams = {
+      temperature: 0.7,
+      top_p: 0.9,
+      max_tokens: 300,
+    }
 
     try {
       const client = makeClient(key)
